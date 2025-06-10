@@ -1,0 +1,3 @@
+[submodule "invoiceEditor"]
+	path = invoiceEditor
+	url = https://github.com/Sammyy181/invoiceEditor
