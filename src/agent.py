@@ -10,6 +10,10 @@ from langchain_community.llms import Ollama
 from langchain_core.output_parsers import BaseOutputParser
 from langchain_core.prompts import PromptTemplate
 
+function_map = {
+    'open_editor' : open_editor
+}
+
 class CommandParser(BaseOutputParser):
     def parse(self, text:str) -> Dict[str, Any]:
         try:
@@ -37,36 +41,52 @@ class CommandInterpreter:
         self.command_registry = {
             "invoice_management": {
                 "function" : "open_editor",
-                "description": "Start the Invoice Management Website"
+                "description": "Launch the invoice management website"
             },
             "invoice_system": {
                 "function" : "open_editor",
                 "description": "Open the invoice management system"
-            },
-            "billing_app": {
-                "function" : "open_editor",
-                "description": "Launch the billing and invoice application"
             }
         }
-        
+
         self.prompt_template = PromptTemplate(
             input_variables=["user_command", "available_commands"],
-            template = """
-            You are a command interpreter. Based on the user's natural language command, identify which action to take.
+            template="""
+                You are an intelligent command interpreter.
 
-            Available commands:
-            {available_commands}
+                Your task is to **analyze the user's natural language command** and **match it** with the most appropriate command from the list of available commands.
 
-            User command: "{user_command}"
+                Instructions:
+                1. Carefully read the user's command.
+                2. Review the list of available commands and match the intent.
+                3. If you find a good match, respond with:
+                    - "command": the key of the matching command from the list
+                    - "confidence": your confidence level (0 to 100) in the match
+                    - "action": a short explanation of what the command will do
+                4. If you **cannot confidently match**, respond with:
+                    - "command": "unknown"
+                    - "confidence": a low number (e.g., 0–30)
+                    - "action": "Could not confidently determine the appropriate command."
 
-            Respond with a JSON object containing:
-            - "command": the matching command key from available commands
-            - "confidence": a number from 0-100 indicating your confidence
-            - "action": brief description of what will be executed
+                Important: Do **not** invent commands that are not in the list. Match only from available_commands.
 
-            If no clear match, use "command": "unknown"
+                ---
 
-            Response:"""
+                Available Commands:
+                {available_commands}
+
+                User Command:
+                "{user_command}"
+
+                ---
+
+                Respond in this exact JSON format:
+                {{
+                "command": "...",
+                "confidence": ...,
+                "action": "..."
+                }}
+                """
         )
         
     def interpret_command(self, user_input:str) -> Dict[str, Any]:
@@ -81,24 +101,85 @@ class CommandInterpreter:
         )
         
         response = self.llm(prompt)
-        print(f"Result: {response}")
+        #print(f"Result: {response}")
         parsed_response = self.parser.parse(response)
         
         return parsed_response
+    
+    def execute_command(self, user_input: str) -> Dict[str, Any]:
+        
+        interpretation = self.interpret_command(user_input)
+        
+        print(f"Interpreted command: {interpretation}")
+        
+        command = interpretation.get("command", "unknown")
+        confidence = interpretation.get("confidence", 0)
+        
+        if command == "unknown" or confidence < 50:
+            return {
+                "status": "failed",
+                "message": "Could not understand the command or confidence too low",
+                "interpretation": interpretation
+            }
+        
+        # Execute the command if it exists in registry
+        if command in self.command_registry:
+            try:
+                command_info = self.command_registry[command]
+                function_name = command_info.get("function")
+                
+                if function_name:
+                    # Get the function from the tools module
+                    if function_name in function_map:
+                        func = function_map[function_name]
+                        if hasattr(func, "invoke"):  # check if it's a Tool
+                            result = func.invoke("")  # pass empty string or real input
+                        else:
+                            result = func()  # plain Python function
+                        
+                        return {
+                            "status": "success",
+                            "message": f"Successfully executed {function_name}",
+                            "function_result": result,
+                            "interpretation": interpretation
+                        }
+                    else:
+                        return {
+                            "status": "failed",
+                            "message": f"Function {function_name} not found.",
+                            "interpretation": interpretation
+                        }
+                else:
+                    return {
+                        "status": "failed",
+                        "message": f"No function specified for command {command}",
+                        "interpretation": interpretation
+                    }
+                    
+            except Exception as e:
+                return {
+                    "status": "error",
+                    "message": f"Error executing command: {str(e)}",
+                    "interpretation": interpretation
+                }
+        else:
+            return {
+                "status": "failed",
+                "message": f"Command {command} not found in registry",
+                "interpretation": interpretation
+            }       
 
 def main():
     interpreter = CommandInterpreter()
     
     user_prompts = [
-        "Open the invoice management system",
-        "Start the billing app",
-        "Launch invoice website",
-        "I want to manage invoices"
+        "Open the invoice management system"
     ]
     
     for prompt in user_prompts:
         print(f"\n--- Processing: '{prompt}' ---")
-        result = interpreter.interpret_command(prompt)
+        result = interpreter.execute_command(prompt)
+        print(f"Result: {result}")
         
 if __name__ == "__main__":
     main()
