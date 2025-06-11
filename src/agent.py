@@ -100,7 +100,7 @@ class CommandInterpreter:
             available_commands=commands_text
         )
         
-        response = self.llm(prompt)
+        response = self.llm.invoke(prompt)
         #print(f"Result: {response}")
         parsed_response = self.parser.parse(response)
         
@@ -169,7 +169,7 @@ class CommandInterpreter:
                 "interpretation": interpretation
             }       
 
-def main():
+"""def main():
     interpreter = CommandInterpreter()
     
     user_prompts = [
@@ -182,4 +182,10 @@ def main():
         print(f"Result: {result}")
         
 if __name__ == "__main__":
-    main()
+    main()"""
+    
+def get_input(user_input):
+    interpreter = CommandInterpreter()
+    
+    result = interpreter.execute_command(user_input)
+    print(f"Status: {result['message']}")
