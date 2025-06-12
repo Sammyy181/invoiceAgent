@@ -315,7 +315,7 @@
             loading.style.display = 'block';
 
             try {
-                const response = await fetch('http://localhost:5000/chat', {
+                const response = await fetch('http://localhost:8000/chat', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -330,7 +330,7 @@
 
                 if (response.ok) {
                     // Add bot response to chat
-                    addMessage(data.response || 'Message received successfully!', 'bot');
+                    addMessage(data.response, 'bot');
                 } else {
                     addMessage('Sorry, there was an error processing your request.', 'bot');
                 }

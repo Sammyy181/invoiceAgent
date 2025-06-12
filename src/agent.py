@@ -1,10 +1,5 @@
-import sys
-import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from invoiceEditor.admin_fn import *
-from invoiceEditor.update_excel import *
-from src.tools import *
+import json
+from tools import *
 from typing import Dict, Any
 from langchain_community.llms import Ollama
 from langchain_core.output_parsers import BaseOutputParser
@@ -147,12 +142,14 @@ class CommandInterpreter:
                         return {
                             "status": "failed",
                             "message": f"Function {function_name} not found.",
+                            "function_result" : "",
                             "interpretation": interpretation
                         }
                 else:
                     return {
                         "status": "failed",
                         "message": f"No function specified for command {command}",
+                        "function_result" : "",
                         "interpretation": interpretation
                     }
                     
@@ -160,12 +157,14 @@ class CommandInterpreter:
                 return {
                     "status": "error",
                     "message": f"Error executing command: {str(e)}",
+                    "function_result" : "",
                     "interpretation": interpretation
                 }
         else:
             return {
                 "status": "failed",
                 "message": f"Command {command} not found in registry",
+                "function_result" : "",
                 "interpretation": interpretation
             }       
 
@@ -186,6 +185,12 @@ if __name__ == "__main__":
     
 def get_input(user_input):
     interpreter = CommandInterpreter()
-    
     result = interpreter.execute_command(user_input)
-    print(f"Status: {result['message']}")
+    
+    status = result.get("status", "unknown")
+    function_result = result.get("function_result", None)
+    
+    print(f"Status: {status}")
+    print(f"Result: {function_result}")
+    
+    return function_result
