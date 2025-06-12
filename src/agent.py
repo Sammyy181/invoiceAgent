@@ -9,7 +9,8 @@ import re
 
 function_map = {
     'open_editor' : open_editor,
-    'add_service' : add_service
+    'add_service' : add_service,
+    'close_editor' : kill_process,
 }
 
 class CommandParser(BaseOutputParser):
@@ -39,12 +40,12 @@ class CommandInterpreter:
         self.command_registry = {
             "invoice_management": {
                 "function" : "open_editor",
-                "description": "Launch the invoice management website",
+                "description": "Open the invoice management website",
                 "parameters": []
             },
             "invoice_system": {
                 "function" : "open_editor",
-                "description": "Open the invoice management system",
+                "description": "Launch the invoice management system",
                 "parameters": []
             },
             "service_addition": {
@@ -56,6 +57,16 @@ class CommandInterpreter:
                 "function" : "create_service",
                 "description" : "Create a new service",
                 "parameters": ["service_name"]
+            },
+            "close_website": {
+                "function" : "close_editor",
+                "description": "Shut down the invoice management website",
+                "parameters": []
+            },
+            "close_system": {
+                "function" : "close_editor",
+                "description": "Close the invoice management system",
+                "parameters": []
             }
         }
 
