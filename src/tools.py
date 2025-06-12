@@ -53,15 +53,15 @@ def open_editor() -> str:
 
 def add_service(service_name: str):
     # Set up Chrome driver
-    service = Service(r"C:\Users\mathu\Downloads\chromedriver-win64\chromedriver-win64\chromedriver.exe")  # auto-finds chromedriver in PATH
+    service = Service()  # auto-finds chromedriver in PATH
     options = webdriver.ChromeOptions()
     options.add_argument("--start-maximized")
 
-    driver = webdriver.Chrome(service=service)
+    driver = webdriver.Chrome(options=options)
     
     try:
         # Open the select_service page served by Flask  
-        driver.get("http://127.0.0.1:5000/select_service")  # or localhost, adjust if needed
+        driver.get("http://127.0.0.1:7001/select_service")  # or localhost, adjust if needed
 
         time.sleep(1)  # Wait for page to load
 
