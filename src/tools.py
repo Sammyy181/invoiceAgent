@@ -115,3 +115,43 @@ def select_service_via_browser(service_name):
     
     time.sleep(2)
     driver.quit()
+    
+def view_invoice_for_service(service_name):
+    service = Service(r"C:\Users\mathu\Downloads\chromedriver-win64\chromedriver-win64\chromedriver.exe")  # Update path
+    driver = webdriver.Chrome(service=service)
+
+    try:
+        driver.get("http://localhost:5000/select_service")  # Update if route differs
+        wait = WebDriverWait(driver, 10)
+
+        select_service_via_browser(service_name)
+
+        # Step 2: Click "View Last Generated Invoice"
+        # Step 2: Click "View Last Month Invoice" button
+        buttons = driver.find_elements(By.CLASS_NAME, "popup-button")
+        clicked = False
+        for btn in buttons:
+            if btn.text.strip().lower() == "view last month invoice":
+                btn.click()
+                clicked = True
+                break
+
+        if not clicked:
+            driver.quit()
+            return "❌ 'View Last Month Invoice' button not found."
+
+
+        # Step 3: Wait for invoice content to load
+        invoice_element = wait.until(EC.presence_of_element_located((By.ID, "invoiceContent")))
+        invoice_text = invoice_element.get_attribute("innerHTML")
+
+        driver.quit()
+
+        if invoice_text:
+            return f"🧾 Invoice for **{service_name}**:\n\n{invoice_text}"
+        else:
+            return f"⚠️ No invoice content found for service: {service_name}"
+
+    except Exception as e:
+        driver.quit()
+        return f"❌ Error occurred: {e}"
