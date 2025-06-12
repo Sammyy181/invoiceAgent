@@ -3,6 +3,7 @@ from flask_cors import CORS
 import datetime
 import logging
 import os
+from agent import *
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))  # path to /src
 TEMPLATE_DIR = os.path.join(BASE_DIR, '../templates')
@@ -50,15 +51,14 @@ def chat():
         # Store the prompt with metadata
         prompt_data = {
             "prompt": prompt,
-            "timestamp": timestamp,
-            "ip_address": request.remote_addr,
-            "user_agent": request.headers.get('User-Agent', 'Unknown')
+            "timestamp": timestamp
         }
         prompts_history.append(prompt_data)
         
         # For now, just echo back a confirmation
         # This is where you'd integrate your AI model
-        response_message = f"I received your message: '{prompt}'. This is where your AI response would go!"
+        response_message = get_input(prompt_data)
+        #response_message = f"I received your message: '{prompt}'. This is where your AI response would go!"
         
         return jsonify({
             "response": response_message,
@@ -144,11 +144,11 @@ def internal_error(error):
 
 if __name__ == '__main__':
     print("🚀 Starting AI Assistant Backend...")
-    print("📡 Server will be available at: http://localhost:5000")
+    """ print("📡 Server will be available at: http://localhost:5000")
     print("💬 Chat endpoint: http://localhost:5000/chat")
     print("📋 View prompts: http://localhost:5000/prompts")
     print("🔍 Latest prompt: http://localhost:5000/prompts/latest")
-    print("🧹 Clear prompts: DELETE http://localhost:5000/prompts/clear")
+    print("🧹 Clear prompts: DELETE http://localhost:5000/prompts/clear")"""
     print("-" * 50)
     
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, port=8000)
