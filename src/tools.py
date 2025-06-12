@@ -1,4 +1,3 @@
-from langchain.tools import tool
 import subprocess
 import os
 import sys
@@ -6,6 +5,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 import time
+import platform
 
 def open_editor() -> str:
     """
@@ -80,25 +80,27 @@ def add_service(service_name: str):
         # Click on "Done" button
         done_button = driver.find_element(By.ID, "submitNewServiceBtn")  # replace with correct ID
         done_button.click()
+        
+        select_service_via_browser(service_name, driver)
 
-        print(f"✅ Service '{service_name}' added via UI.")
+        return f"✅ Service '{service_name}' added via UI."
 
     except Exception as e:
-        print(f"❌ Error while interacting with browser: {e}")
+        return f"❌ Error while interacting with browser: {e}"
 
     finally:
         time.sleep(1)
         driver.quit()
 
 
-def select_service_via_browser(service_name):
-    service = Service(r"C:\Users\mathu\Downloads\chromedriver-win64\chromedriver-win64\chromedriver.exe")
+def select_service_via_browser(service_name, driver=None):
+    """service = Service()
     driver = webdriver.Chrome(service=service)
 
-    driver.get("http://localhost:5000/select_service")  # adjust if needed
+    driver.get("http://localhost:7001/select_service")  # adjust if needed
     time.sleep(1)
 
-    # Find all service buttons
+    # Find all service buttons"""
     buttons = driver.find_elements(By.CSS_SELECTOR, ".service-buttons button")
     
     # Loop through buttons and click the one matching the service_name
@@ -113,6 +115,32 @@ def select_service_via_browser(service_name):
     if not found:
         print(f"❌ Service '{service_name}' not found.")
     
+    """time.sleep(2)
+    driver.quit()"""
+    
+def kill_process(port=7001):
+    try:
+        if platform.system() == "Windows":
+            # Windows
+            result = subprocess.run(['netstat', '-ano'], capture_output=True, text=True)
+            lines = result.stdout.split('\n')
+            for line in lines:
+                if f':{port}' in line and 'LISTENING' in line:
+                    pid = line.split()[-1]
+                    subprocess.run(['taskkill', '/F', '/PID', pid])
+                    return f"✅ Process on port {port} killed successfully."
+        else:
+            # Linux/Mac
+            result = subprocess.run(['lsof', '-ti', f':{port}'], capture_output=True, text=True)
+            if result.stdout.strip():
+                pid = result.stdout.strip()
+                subprocess.run(['kill', '-9', pid])
+                return f"✅ Process on port {port} killed successfully."
+    except Exception as e:
+        print(f"Error: {e}")
+        return f"❌ Failed to kill process on port {port}: {str(e)}"
+
+    return f"❌ No process found on port {port}."
     time.sleep(2)
     driver.quit()
     
