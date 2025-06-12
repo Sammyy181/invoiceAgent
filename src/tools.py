@@ -89,3 +89,29 @@ def add_service(service_name: str):
     finally:
         time.sleep(1)
         driver.quit()
+
+
+def select_service_via_browser(service_name):
+    service = Service(r"C:\Users\mathu\Downloads\chromedriver-win64\chromedriver-win64\chromedriver.exe")
+    driver = webdriver.Chrome(service=service)
+
+    driver.get("http://localhost:5000/select_service")  # adjust if needed
+    time.sleep(1)
+
+    # Find all service buttons
+    buttons = driver.find_elements(By.CSS_SELECTOR, ".service-buttons button")
+    
+    # Loop through buttons and click the one matching the service_name
+    found = False
+    for btn in buttons:
+        if btn.text.strip().lower() == service_name.lower():
+            btn.click()
+            found = True
+            print(f"✅ Selected service: {service_name}")
+            break
+
+    if not found:
+        print(f"❌ Service '{service_name}' not found.")
+    
+    time.sleep(2)
+    driver.quit()
