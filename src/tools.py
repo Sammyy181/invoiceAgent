@@ -4,6 +4,8 @@ import sys
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 import time
 import platform
 
@@ -94,26 +96,33 @@ def add_service(service_name: str):
 
 
 def select_service_via_browser(service_name, driver=None):
-    """service = Service()
-    driver = webdriver.Chrome(service=service)
+    driver.get("http://localhost:7001/select_service")
 
-    driver.get("http://localhost:7001/select_service")  # adjust if needed
-    time.sleep(1)
+    wait = WebDriverWait(driver, 10)
+    try:
+        # Wait until the first service button is visible
+        wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".service-buttons button")))
 
-    # Find all service buttons"""
-    buttons = driver.find_elements(By.CSS_SELECTOR, ".service-buttons button")
-    
-    # Loop through buttons and click the one matching the service_name
-    found = False
-    for btn in buttons:
-        if btn.text.strip().lower() == service_name.lower():
-            btn.click()
-            found = True
-            print(f"✅ Selected service: {service_name}")
-            break
+        buttons = driver.find_elements(By.CSS_SELECTOR, ".service-buttons button")
 
-    if not found:
-        print(f"❌ Service '{service_name}' not found.")
+        found = False
+        for btn in buttons:
+            # Use innerText to reliably get dynamic/complex label text
+            label = btn.get_attribute("innerText").strip().lower()
+            print(f"Checking button: {label}")
+            if label == service_name.lower():
+                btn.click()
+                print(f"✅ Selected service: {service_name}")
+                found = True
+                break
+
+        if not found:
+            print(f"❌ Service '{service_name}' not found.")
+
+    except Exception as e:
+        print(f"⚠️ Error while selecting service: {e}")
+        time.sleep(2)
+        driver.quit()
     
     """time.sleep(2)
     driver.quit()"""
@@ -145,30 +154,22 @@ def kill_process(port=7001):
     driver.quit()
     
 def view_invoice_for_service(service_name):
-    service = Service(r"C:\Users\mathu\Downloads\chromedriver-win64\chromedriver-win64\chromedriver.exe")  # Update path
+    service = Service()  # Update path
     driver = webdriver.Chrome(service=service)
 
     try:
-        driver.get("http://localhost:5000/select_service")  # Update if route differs
+        driver.get("http://localhost:7001/select_service")  # Update if route differs
         wait = WebDriverWait(driver, 10)
 
-        select_service_via_browser(service_name)
+        select_service_via_browser(service_name, driver=driver)
 
-        # Step 2: Click "View Last Generated Invoice"
-        # Step 2: Click "View Last Month Invoice" button
-        buttons = driver.find_elements(By.CLASS_NAME, "popup-button")
-        clicked = False
-        for btn in buttons:
-            if btn.text.strip().lower() == "view last month invoice":
-                btn.click()
-                clicked = True
-                break
-
-        if not clicked:
-            driver.quit()
+        print(f"✅ Selected service: {service_name}")
+        try:
+            view_button = wait.until(EC.presence_of_element_located((By.ID, "viewInvoiceButton")))
+            view_button.click()  # or whatever you need to do with it
+        except Exception as e:
             return "❌ 'View Last Month Invoice' button not found."
-
-
+            
         # Step 3: Wait for invoice content to load
         invoice_element = wait.until(EC.presence_of_element_located((By.ID, "invoiceContent")))
         invoice_text = invoice_element.get_attribute("innerHTML")

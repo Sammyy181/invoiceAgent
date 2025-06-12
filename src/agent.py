@@ -11,6 +11,7 @@ function_map = {
     'open_editor' : open_editor,
     'add_service' : add_service,
     'close_editor' : kill_process,
+    'view_invoice' : view_invoice_for_service,
 }
 
 class CommandParser(BaseOutputParser):
@@ -67,6 +68,16 @@ class CommandInterpreter:
                 "function" : "close_editor",
                 "description": "Close the invoice management system",
                 "parameters": []
+            },
+            "view_invoice": {
+                "function" : "view_invoice",
+                "description": "View the last month invoice for",
+                "parameters": ["service_name"]
+            },
+            "view_last_month_invoice": {
+                "function" : "view_invoice",
+                "description": "Print last month invoice for",
+                "parameters": ["service_name"]
             }
         }
 
@@ -176,14 +187,15 @@ class CommandInterpreter:
                     r'create[:\s]+(["\']?)([^"\']+)\1',   # "create: name" or "create name"
                     r'new[:\s]+(["\']?)([^"\']+)\1',      # "new: name" or "new name"
                     r'called[:\s]+(["\']?)([^"\']+)\1',   # "called name"
-                    r'named[:\s]+(["\']?)([^"\']+)\1'     # "named name"
+                    r'named[:\s]+(["\']?)([^"\']+)\1',    #"named: name" or "named name"
+                    r'for[:\s]+(["\']?)([^"\']+)\1'       # "for: name" or "for name"
                 ]
                 
                 service_name = None
                 for pattern in service_patterns:
                     match = re.search(pattern, user_input_lower)
                     if match:
-                        service_name = match.group(2).strip()
+                        service_name = match.group(2).strip().capitalize()
                         break
                 
                 # If no pattern matched, try to extract the last word/phrase
@@ -270,7 +282,7 @@ class CommandInterpreter:
                     
             except Exception as e:
                 return {
-                    "status": "error",
+                    "status": f"Error executing command: {str(e)}",
                     "message": f"Error executing command: {str(e)}",
                     "function_result" : "",
                     "interpretation": interpretation
