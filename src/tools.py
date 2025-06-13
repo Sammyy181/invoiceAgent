@@ -153,7 +153,7 @@ def kill_process(port=7001):
     time.sleep(2)
     driver.quit()
     
-def view_invoice_for_service(service_name):
+def view_invoice_for_service(service_name, port=7001):
     service = Service()  # Update path
     driver = webdriver.Chrome(service=service)
 
@@ -174,10 +174,8 @@ def view_invoice_for_service(service_name):
         invoice_element = wait.until(EC.presence_of_element_located((By.ID, "invoiceContent")))
         invoice_text = invoice_element.get_attribute("innerHTML")
 
-        driver.quit()
-
         if invoice_text:
-            return f"🧾 Invoice for **{service_name}**:\n\n{invoice_text}"
+            return f"🧾 Invoice for {service_name} can be seen at the port: {port}"
         else:
             return f"⚠️ No invoice content found for service: {service_name}"
 
