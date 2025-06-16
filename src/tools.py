@@ -83,7 +83,19 @@ def add_service(service_name: str):
         done_button = driver.find_element(By.ID, "submitNewServiceBtn")  # replace with correct ID
         done_button.click()
         
-        select_service_via_browser(service_name, driver)
+        time.sleep(1)  # wait for service to be added
+        
+        buttons = driver.find_elements(By.CSS_SELECTOR, ".service-buttons button")
+        found = False
+        
+        for btn in buttons:
+            if btn.text.strip() == service_name:
+                btn.click()  
+                found = True
+                break
+
+        if not found:
+            return f"❌ Service '{service_name}' not found after adding."
 
         return f"✅ Service '{service_name}' added via UI."
 
@@ -94,8 +106,8 @@ def add_service(service_name: str):
         time.sleep(1)
         driver.quit()
 
-
 def select_service_via_browser(service_name, driver=None):
+    print(service_name)
     driver.get("http://localhost:7001/select_service")
 
     wait = WebDriverWait(driver, 10)
