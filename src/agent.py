@@ -9,6 +9,7 @@ import re
 import inspect
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
 
 function_map = {
     'open_editor' : open_editor,
@@ -23,7 +24,7 @@ _global_driver = None
 def get_global_driver():
     global _global_driver
     if _global_driver is None:
-        service = Service() 
+        service = Service(ChromeDriverManager().install()) 
         options = webdriver.ChromeOptions()
         options.add_argument("--start-maximized")
         _global_driver = webdriver.Chrome(options=options)
