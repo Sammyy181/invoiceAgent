@@ -6,13 +6,38 @@ from langchain_core.output_parsers import BaseOutputParser
 from langchain_core.prompts import PromptTemplate
 from difflib import SequenceMatcher
 import re
+import inspect
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
 
 function_map = {
     'open_editor' : open_editor,
     'add_service' : add_service,
     'close_editor' : kill_process,
     'view_invoice' : view_invoice_for_service,
+    'list_services' : list_services,
 }
+
+_global_driver = None
+
+def get_global_driver():
+    global _global_driver
+    if _global_driver is None:
+        service = Service() 
+        options = webdriver.ChromeOptions()
+        options.add_argument("--start-maximized")
+        _global_driver = webdriver.Chrome(options=options)
+    return _global_driver
+
+def close_global_driver():
+    """Close and reset the global WebDriver instance"""
+    global _global_driver
+    if _global_driver is not None:
+        try:
+            _global_driver.quit()
+        except:
+            pass  
+        _global_driver = None
 
 class CommandParser(BaseOutputParser):
     def parse(self, text:str) -> Dict[str, Any]:
@@ -78,6 +103,16 @@ class CommandInterpreter:
                 "function" : "view_invoice",
                 "description": "Print last month invoice for",
                 "parameters": ["service_name"]
+            },
+            "list_services": {
+                "function" : "list_services",
+                "description": "List all available services",
+                "parameters": []
+            },
+            "view_all_invoices": {
+                "function" : "list_services",
+                "description": "View all services",
+                "parameters": []
             }
         }
 
@@ -244,20 +279,42 @@ class CommandInterpreter:
                         if hasattr(func, "invoke"):  # check if it's a Tool
                             result = func.invoke("")  # Optional: pass input string here if needed
                         else:
-                            # Collect actual parameter values from the interpreted result
-                            param_values = [
-                                interpretation.get("parameters", {}).get(param_name, None)
-                                for param_name in required_params
-                            ]
+                            sig = inspect.signature(func)
+                            func_params = sig.parameters
 
-                            # Check if all required parameters are present
-                            if all(val is not None for val in param_values):
-                                result = func(*param_values)
-                            else:
+                            provided_params = interpretation.get("parameters", {})  # e.g., { "service_name": "Hosting" }
+                            call_args = {}
+                            
+                            for name in func_params:
+                                if name == "driver":
+                                    call_args[name] = get_global_driver()
+                                elif name in provided_params:
+                                    call_args[name] = provided_params.get(name, None)
+                            
+                            missing = [
+                                name for name, param in func_params.items()
+                                if param.default is inspect.Parameter.empty and name not in call_args
+                            ]
+                            
+                            if missing:
                                 result = {
                                     "status": "failed",
-                                    "message": f"Missing required parameters: {required_params}"
+                                    "message": f"Missing required parameters: {missing}"
                                 }
+
+                            else:
+                                if function_name == "close_editor":
+                                    result = func(**call_args)
+                                    # Also close the browser window
+                                    close_global_driver()
+                                    return {
+                                        "status": "success",
+                                        "message": f"Successfully executed {function_name} and closed browser",
+                                        "function_result": result,
+                                        "interpretation": interpretation
+                                    }
+                                else:
+                                    result = func(**call_args)
                         
                         return {
                             "status": "success",

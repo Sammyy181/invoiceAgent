@@ -83,6 +83,38 @@
             position: relative;
         }
 
+        .message.bot-message {
+            background-color: #f1f1f1;
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin: 8px 0;
+            max-width: 80%;
+            white-space: pre-wrap;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .message.bot-message p {
+            margin: 0;
+            font-size: 16px;
+            line-height: 1.5;
+            color: #333;
+        }
+
+        .message.bot-message ul {
+            margin-top: 8px;
+            padding-left: 20px;
+            list-style-type: disc;
+        }
+
+        .message.bot-message li {
+            margin-bottom: 6px;
+            font-size: 15px;
+            line-height: 1.4;
+            color: #333;
+        }
+
+
+
         .welcome-message {
             text-align: center;
             color: #6c5ce7;
@@ -349,7 +381,11 @@
         function addMessage(text, sender) {
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${sender}-message`;
-            messageDiv.textContent = text;
+            if (sender === 'bot') {
+                messageDiv.innerHTML = text; // Allow HTML rendering for bot response
+            } else {
+                messageDiv.textContent = text; // Keep user input safe
+            }
             
             // Remove welcome message if it exists
             const welcomeMessage = chatMessages.querySelector('.welcome-message');

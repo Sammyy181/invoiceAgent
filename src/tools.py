@@ -8,8 +8,9 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time
 import platform
+import requests
 
-def open_editor() -> str:
+def open_editor(port=7001, driver=None) -> str:
     """
     Launches the invoice editor application located in '../invoiceEditor/app.py'
     """
@@ -45,6 +46,22 @@ def open_editor() -> str:
                 return f"❌ Flask app terminated with exit code {poll_result}. Log:\n{log_content}"
             except:
                 return f"❌ Flask app terminated with exit code {poll_result}. Could not read log file."
+            
+        base_url = f"http://127.0.0.1:{port}"
+        for _ in range(20):  # Try for up to ~10 seconds
+            try:
+                response = requests.get(base_url)
+                if response.status_code == 200:
+                    break
+            except requests.exceptions.ConnectionError:
+                time.sleep(0.5)
+        else:
+            return f"❌ Flask app didn't start at {base_url} within timeout."
+
+        try:
+            driver.get(f"{base_url}/select_service")
+        except Exception as e:
+            return f"❌ Failed to open browser: {str(e)}"
         
         return f"✅ Invoice Editor has been launched at http://127.0.0.1:7001/."
         
@@ -53,14 +70,7 @@ def open_editor() -> str:
         return f"❌ Failed to launch Invoice Editor: {str(e)}"
 
 
-def add_service(service_name: str):
-    # Set up Chrome driver
-    service = Service()  # auto-finds chromedriver in PATH
-    options = webdriver.ChromeOptions()
-    options.add_argument("--start-maximized")
-
-    driver = webdriver.Chrome(options=options)
-    
+def add_service(service_name: str, driver=None) -> str: 
     try:
         # Open the select_service page served by Flask  
         driver.get("http://127.0.0.1:7001/select_service")  # or localhost, adjust if needed
@@ -102,12 +112,7 @@ def add_service(service_name: str):
     except Exception as e:
         return f"❌ Error while interacting with browser: {e}"
 
-    finally:
-        time.sleep(1)
-        driver.quit()
-
-def select_service_via_browser(service_name, driver=None):
-    print(service_name)
+def select_service_via_browser(service_name, driver=None) -> None:
     driver.get("http://localhost:7001/select_service")
 
     wait = WebDriverWait(driver, 10)
@@ -134,12 +139,11 @@ def select_service_via_browser(service_name, driver=None):
     except Exception as e:
         print(f"⚠️ Error while selecting service: {e}")
         time.sleep(2)
-        driver.quit()
     
     """time.sleep(2)
     driver.quit()"""
     
-def kill_process(port=7001):
+def kill_process(port=7001) -> str:
     try:
         if platform.system() == "Windows":
             # Windows
@@ -162,13 +166,8 @@ def kill_process(port=7001):
         return f"❌ Failed to kill process on port {port}: {str(e)}"
 
     return f"❌ No process found on port {port}."
-    time.sleep(2)
-    driver.quit()
     
-def view_invoice_for_service(service_name, port=7001):
-    service = Service()  # Update path
-    driver = webdriver.Chrome(service=service)
-
+def view_invoice_for_service(service_name, port=7001, driver=None) -> str:
     try:
         driver.get("http://localhost:7001/select_service")  # Update if route differs
         wait = WebDriverWait(driver, 10)
@@ -192,5 +191,24 @@ def view_invoice_for_service(service_name, port=7001):
             return f"⚠️ No invoice content found for service: {service_name}"
 
     except Exception as e:
-        driver.quit()
         return f"❌ Error occurred: {e}"
+
+def list_services(driver=None):
+    try:
+        wait = WebDriverWait(driver, 10)
+        wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".service-buttons button")))
+
+        buttons = driver.find_elements(By.CSS_SELECTOR, ".service-buttons button")
+        services = []
+        
+        for btn in buttons:
+            label = btn.get_attribute("innerText").strip()
+            if label:
+                services.append(label)
+        
+        if not services:
+            return "⚠️ No services found."
+        
+        return "The following services are available:<ul>" + "".join(f"<li>{service}</li>" for service in services) + "</ul>"
+    except Exception as e:
+        return f"❌ Error while listing services: {e}"
