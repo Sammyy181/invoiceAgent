@@ -192,6 +192,32 @@ def view_invoice_for_service(service_name, port=7001, driver=None) -> str:
 
     except Exception as e:
         return f"❌ Error occurred: {e}"
+    
+def view_current_invoice_for_service(service_name, port=7001, driver=None) -> str:
+    try:
+        driver.get("http://localhost:7001/select_service")  # Update if route differs
+        wait = WebDriverWait(driver, 10)
+
+        select_service_via_browser(service_name, driver=driver)
+
+        print(f"✅ Selected service: {service_name}")
+        try:
+            view_button = wait.until(EC.presence_of_element_located((By.ID, "viewCurrentInvoiceButton")))
+            view_button.click()  # or whatever you need to do with it
+        except Exception as e:
+            return "❌ 'View Current Month Invoice' button not found."
+            
+        # Step 3: Wait for invoice content to load
+        invoice_element = wait.until(EC.presence_of_element_located((By.ID, "invoiceContent")))
+        invoice_text = invoice_element.get_attribute("innerHTML")
+
+        if invoice_text:
+            return f"🧾 Invoice for {service_name} can be seen at the port: {port}"
+        else:
+            return f"⚠️ No invoice content found for service: {service_name}"
+
+    except Exception as e:
+        return f"❌ Error occurred: {e}"
 
 def list_services(driver=None):
     try:
