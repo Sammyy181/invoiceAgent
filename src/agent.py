@@ -16,8 +16,9 @@ function_map = {
     'open_editor' : open_editor,
     'add_service' : add_service,
     'close_editor' : kill_process,
-    'view_invoice' : view_invoice_for_service,
+    'view_last_invoice' : view_invoice_for_service,
     'list_services' : list_services,
+    'view_current_invoice': view_current_invoice_for_service
 }
 
 COMMAND_PROMPT_TEMPLATE = """You are a command interpreter for an invoice management system.
@@ -28,8 +29,9 @@ VALID COMMANDS:
 • open_editor - Opens the invoice management interface
 • add_service - Adds a new service (requires: service_name)  
 • close_editor - Closes the invoice management interface
-• view_invoice - Shows invoice for a service (requires: service_name)
+• view_last_invoice - Shows the previous month's invoice for a service (requires: service_name)
 • list_services - Lists all available services
+• view_current_invoice - Shows the current month's invoice for a service (requires: service_name)
 
 RESPONSE FORMAT:
 You must respond with EXACTLY this JSON structure:
@@ -37,7 +39,7 @@ You must respond with EXACTLY this JSON structure:
   "command": "command_name",
   "confidence": 0.95,
   "parameters": {{
-    "service_name": "value"
+    "service_name": "value" (optional, only for commands that require it)
   }}
 }}
 
@@ -104,62 +106,9 @@ class CommandInterpreter:
     def __init__(self, model: str="llama3.2:1b"):
         self.llm = Ollama(model=model)
         self.parser = CommandParser()
-        
-        """self.command_registry = {
-            "invoice_management": {
-                "function" : "open_editor",
-                "description": "Open the invoice management website",
-                "parameters": []
-            },
-            "invoice_system": {
-                "function" : "open_editor",
-                "description": "Launch the invoice management system",
-                "parameters": []
-            },
-            "service_addition": {
-                "function" : "add_service",
-                "description" : "Add a New Service",
-                "parameters": ["service_name"]
-            },
-            "service_creation": {
-                "function" : "create_service",
-                "description" : "Create a new service",
-                "parameters": ["service_name"]
-            },
-            "close_website": {
-                "function" : "close_editor",
-                "description": "Shut down the invoice management website",
-                "parameters": []
-            },
-            "close_system": {
-                "function" : "close_editor",
-                "description": "Close the invoice management system",
-                "parameters": []
-            },
-            "view_invoice": {
-                "function" : "view_invoice",
-                "description": "View the last month invoice for",
-                "parameters": ["service_name"]
-            },
-            "view_last_month_invoice": {
-                "function" : "view_invoice",
-                "description": "Print last month invoice for",
-                "parameters": ["service_name"]
-            },
-            "list_services": {
-                "function" : "list_services",
-                "description": "List all available services",
-                "parameters": []
-            },
-            "view_all_invoices": {
-                "function" : "list_services",
-                "description": "View all services",
-                "parameters": []
-            }
-        }"""
 
         self.prompt_template = PromptTemplate(
-            input_variables=["user_command", "available_commands"],
+            input_variables=["user_command"],
             template=COMMAND_PROMPT_TEMPLATE
         )
         
@@ -290,8 +239,10 @@ def get_input(user_input):
     
     status = result.get("status", "unknown")
     function_result = result.get("function_result", None)
+    message = result.get("message", "No message provided")
     
     print(f"Status: {status}")
-    print(f"Result: {function_result}")
+    print(f"Message: {message}")
+    print(f"Response: {function_result}")
     
     return function_result

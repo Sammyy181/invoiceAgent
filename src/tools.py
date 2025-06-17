@@ -126,10 +126,8 @@ def select_service_via_browser(service_name, driver=None) -> None:
         for btn in buttons:
             # Use innerText to reliably get dynamic/complex label text
             label = btn.get_attribute("innerText").strip().lower()
-            print(f"Checking button: {label}")
             if label == service_name.lower():
                 btn.click()
-                print(f"✅ Selected service: {service_name}")
                 found = True
                 break
 
