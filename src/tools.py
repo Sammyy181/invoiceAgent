@@ -165,7 +165,7 @@ def kill_process(port=7001) -> str:
 
     return f"❌ No process found on port {port}."
     
-def view_invoice_for_service(service_name, port=7001, driver=None) -> str:
+def view_invoice_for_service(service_name, driver=None) -> str:
     try:
         driver.get("http://localhost:7001/select_service")  # Update if route differs
         wait = WebDriverWait(driver, 10)
@@ -175,7 +175,7 @@ def view_invoice_for_service(service_name, port=7001, driver=None) -> str:
         print(f"✅ Selected service: {service_name}")
         try:
             view_button = wait.until(EC.presence_of_element_located((By.ID, "viewInvoiceButton")))
-            view_button.click()  # or whatever you need to do with it
+            view_button.click()  
         except Exception as e:
             return "❌ 'View Last Month Invoice' button not found."
             
@@ -184,14 +184,14 @@ def view_invoice_for_service(service_name, port=7001, driver=None) -> str:
         invoice_text = invoice_element.get_attribute("innerHTML")
 
         if invoice_text:
-            return f"🧾 Invoice for {service_name} can be seen at the port: {port}"
+            return f"🧾 Invoice for {service_name} can now be seen."
         else:
             return f"⚠️ No invoice content found for service: {service_name}"
 
     except Exception as e:
         return f"❌ Error occurred: {e}"
     
-def view_current_invoice_for_service(service_name, port=7001, driver=None) -> str:
+def view_current_invoice_for_service(service_name, driver=None) -> str:
     try:
         driver.get("http://localhost:7001/select_service")  # Update if route differs
         wait = WebDriverWait(driver, 10)
@@ -210,7 +210,7 @@ def view_current_invoice_for_service(service_name, port=7001, driver=None) -> st
         invoice_text = invoice_element.get_attribute("innerHTML")
 
         if invoice_text:
-            return f"🧾 Invoice for {service_name} can be seen at the port: {port}"
+            return f"🧾 Invoice for {service_name} can now be seen."
         else:
             return f"⚠️ No invoice content found for service: {service_name}"
 
@@ -236,3 +236,16 @@ def list_services(driver=None):
         return "The following services are available:<ul>" + "".join(f"<li>{service}</li>" for service in services) + "</ul>"
     except Exception as e:
         return f"❌ Error while listing services: {e}"
+
+def copy_previous(service_name, driver=None):
+    try:
+        wait = WebDriverWait(driver, 10)
+        wait.until(EC.presence_of_element_located((By.ID, "copyPreviousData")))
+        
+        button = driver.find_element(By.ID, "copyPreviousData")
+        button.click()
+        
+        time.sleep(1)
+        return f"Copied previous data for service: {service_name}!"
+    except Exception as e:
+        return f"Error while copying previous data: {e}"
