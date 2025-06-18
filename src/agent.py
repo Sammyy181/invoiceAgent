@@ -20,7 +20,10 @@ function_map = {
     'list_services' : list_services,
     'view_current_invoice': view_current_invoice_for_service,
     'copy_previous_data': copy_previous,
-    'list_customers': list_customers
+    'list_customers': list_customers,
+    'add_customer': add_customer_button,
+    'edit_customer': select_customer,
+    'update_tax' : update_tax_rates
 }
 
 COMMAND_PROMPT_TEMPLATE = """You are a command interpreter for an invoice management system.
@@ -36,6 +39,9 @@ VALID COMMANDS:
 • view_current_invoice - Shows the current month's invoice for a service (requires: service_name)
 • copy_previous_data - Copies previous data for a service (requires: service_name)
 • list_customers - Lists all customers for a service (requires: service_name)
+• add_customer - Adds a new customer (requires: service_name)
+• edit_customer - Edits an existing customer (requires: service_name, customer_name)
+• update_tax - Updates tax rates for a service (requires: service_name, cgst, sgst)
 
 RESPONSE FORMAT:
 You must respond with EXACTLY this JSON structure:
@@ -107,7 +113,7 @@ class CommandParser(BaseOutputParser):
             return {"command": "unknown", "action": "none"}
 
 class CommandInterpreter:
-    def __init__(self, model: str="llama3.2:1b"):
+    def __init__(self, model: str="mistral"): #Use llama3.2:1b for a lightweight model, mistral for a more capable one
         self.llm = Ollama(model=model)
         self.parser = CommandParser()
 

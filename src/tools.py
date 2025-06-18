@@ -297,13 +297,13 @@ def add_customer_button(service_name, driver=None):
     try:
         update_preference_button(service_name, driver=driver)
         wait = WebDriverWait(driver, 10)
-        wait.until(EC.presence_of_element_located((By.ID, "add-new-btn")))
+        wait.until(EC.presence_of_element_located((By.ID, "addNewCustomer")))
         
-        button = driver.find_element(By.ID, "add-new-btn")
+        button = driver.find_element(By.ID, "addNewCustomer")
         button.click()
         
         time.sleep(1)
-        return f"Add a new customer for service: {service_name}!"
+        return f"{service_name} has been selected. Please enter the customer details in the form that appears."
     except Exception as e:
         return f"❌ Error occurred: {e}"
     
@@ -318,7 +318,7 @@ def select_customer(service_name, customer_name, driver=None):
             label = btn.get_attribute("innerText").strip()
             if label.lower() == customer_name.lower():
                 btn.click()
-                return f"✅ Customer '{customer_name}' selected for updating."
+                return f"Customer '{customer_name}' selected for updating. Please proceed with the update."
         
         return f"❌ Customer '{customer_name}' not found on the page."
 
