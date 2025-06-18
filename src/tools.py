@@ -216,6 +216,7 @@ def view_current_invoice_for_service(service_name, port=7001, driver=None) -> st
 
     except Exception as e:
         return f"❌ Error occurred: {e}"
+    
 
 def list_services(driver=None):
     try:
@@ -236,3 +237,42 @@ def list_services(driver=None):
         return "The following services are available:<ul>" + "".join(f"<li>{service}</li>" for service in services) + "</ul>"
     except Exception as e:
         return f"❌ Error while listing services: {e}"
+    
+
+def update_preference_button(service_name, port=7001, driver=None) -> str:
+    try:
+        driver.get("http://localhost:7001/select_service")  # Update if route differs
+        wait = WebDriverWait(driver, 10)
+
+        select_service_via_browser(service_name, driver=driver)
+
+        print(f"✅ Selected service: {service_name}")
+        try:
+            view_button = wait.until(EC.presence_of_element_located((By.ID, "updatePreferenceButton")))
+            view_button.click()  # or whatever you need to do with it
+        except Exception as e:
+            return "❌ 'Update Preference' button not found."
+
+    except Exception as e:
+        return f"❌ Error occurred: {e}"
+    
+def list_customers(driver=None):
+    try:
+        wait = WebDriverWait(driver, 10)
+        wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".customer-btn")))
+
+        buttons = driver.find_elements(By.CSS_SELECTOR, ".customer-btn")
+        customers = []
+
+        for btn in buttons:
+            label = btn.get_attribute("innerText").strip()
+            if label:
+                customers.append(label)
+
+        if not customers:
+            return "⚠️ No customers found."
+
+        return "The following customers are available:<ul>" + "".join(f"<li>{c}</li>" for c in customers) + "</ul>"
+    
+    except Exception as e:
+        return f"❌ Error while listing customers: {e}"
