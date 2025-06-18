@@ -19,7 +19,8 @@ function_map = {
     'view_last_invoice' : view_invoice_for_service,
     'list_services' : list_services,
     'view_current_invoice': view_current_invoice_for_service,
-    'copy_previous_data': copy_previous
+    'copy_previous_data': copy_previous,
+    'list_customers': list_customers
 }
 
 COMMAND_PROMPT_TEMPLATE = """You are a command interpreter for an invoice management system.
@@ -34,6 +35,7 @@ VALID COMMANDS:
 • list_services - Lists all available services
 • view_current_invoice - Shows the current month's invoice for a service (requires: service_name)
 • copy_previous_data - Copies previous data for a service (requires: service_name)
+• list_customers - Lists all customers for a service (requires: service_name)
 
 RESPONSE FORMAT:
 You must respond with EXACTLY this JSON structure:

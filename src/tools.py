@@ -239,7 +239,7 @@ def list_services(driver=None):
         return f"❌ Error while listing services: {e}"
     
 
-def update_preference_button(service_name, port=7001, driver=None) -> str:
+def update_preference_button(service_name, driver=None) -> str:
     try:
         driver.get("http://localhost:7001/select_service")  # Update if route differs
         wait = WebDriverWait(driver, 10)
@@ -256,8 +256,9 @@ def update_preference_button(service_name, port=7001, driver=None) -> str:
     except Exception as e:
         return f"❌ Error occurred: {e}"
     
-def list_customers(driver=None):
+def list_customers(service_name, driver=None):
     try:
+        update_preference_button(service_name, driver=driver)
         wait = WebDriverWait(driver, 10)
         wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".customer-btn")))
 
@@ -280,6 +281,7 @@ def list_customers(driver=None):
 
 def copy_previous(service_name, driver=None):
     try:
+        update_preference_button(service_name, driver=driver)
         wait = WebDriverWait(driver, 10)
         wait.until(EC.presence_of_element_located((By.ID, "copyPreviousData")))
         
