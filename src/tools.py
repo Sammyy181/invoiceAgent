@@ -292,3 +292,69 @@ def copy_previous(service_name, driver=None):
         return f"Copied previous data for service: {service_name}!"
     except Exception as e:
         return f"Error while copying previous data: {e}"
+    
+def add_customer_button(service_name, driver=None):
+    try:
+        update_preference_button(service_name, driver=driver)
+        wait = WebDriverWait(driver, 10)
+        wait.until(EC.presence_of_element_located((By.ID, "add-new-btn")))
+        
+        button = driver.find_element(By.ID, "add-new-btn")
+        button.click()
+        
+        time.sleep(1)
+        return f"Add a new customer for service: {service_name}!"
+    except Exception as e:
+        return f"❌ Error occurred: {e}"
+    
+def select_customer(service_name, customer_name, driver=None):
+    try:
+        update_preference_button(service_name, driver=driver)
+        wait = WebDriverWait(driver, 10)
+        wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".customer-btn")))
+
+        buttons = driver.find_elements(By.CSS_SELECTOR, ".customer-btn")
+        for btn in buttons:
+            label = btn.get_attribute("innerText").strip()
+            if label.lower() == customer_name.lower():
+                btn.click()
+                return f"✅ Customer '{customer_name}' selected for updating."
+        
+        return f"❌ Customer '{customer_name}' not found on the page."
+
+    except Exception as e:
+        return f"❌ Error while selecting customer: {e}"
+    
+def update_tax_rates(service_name: str, cgst: float = None, sgst: float = None, driver=None) -> str:
+    try:
+        update_preference_button(service_name, driver=driver)
+        wait = WebDriverWait(driver, 10)
+        
+        # Find input fields
+        cgst_input = driver.find_element(By.NAME, "cgst")
+        sgst_input = driver.find_element(By.NAME, "sgst")
+
+        # Update CGST only if provided
+        if cgst is not None:
+            cgst_input.clear()
+            cgst_input.send_keys(str(cgst))
+        else:
+            cgst = cgst_input.get_attribute("value")
+
+        # Update SGST only if provided
+        if sgst is not None:
+            sgst_input.clear()
+            sgst_input.send_keys(str(sgst))
+        else:
+            sgst = sgst_input.get_attribute("value")
+
+        # Submit the form
+        submit_button = driver.find_element(By.CSS_SELECTOR, ".form-btn.save")
+        submit_button.click()
+
+        return f"✅ Tax rates updated for '{service_name}': CGST={cgst}%, SGST={sgst}%"
+
+    except Exception as e:
+        return f"❌ Failed to update tax rates: {e}"
+
+
