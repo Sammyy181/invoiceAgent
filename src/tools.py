@@ -330,9 +330,11 @@ def update_tax_rates(service_name: str, cgst: float = None, sgst: float = None, 
         update_preference_button(service_name, driver=driver)
         wait = WebDriverWait(driver, 10)
         
+        wait.until(EC.visibility_of_element_located((By.ID, "cgst")))
+        
         # Find input fields
-        cgst_input = driver.find_element(By.NAME, "cgst")
-        sgst_input = driver.find_element(By.NAME, "sgst")
+        cgst_input = driver.find_element(By.ID, "cgst")
+        sgst_input = driver.find_element(By.ID, "sgst")
 
         # Update CGST only if provided
         if cgst is not None:
