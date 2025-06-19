@@ -24,8 +24,8 @@ PAGES = [
 
 # Realistic prior action chains for each action
 REALISTIC_WORKFLOWS = [
-    ["open_editor", "list_service", "add_service", "add_customer", "add_customer", "update_tax", "view_current_invoice", "close_editor"],
-    ["open_editor", "list_service", "view_last_invoice", "edit_customer", "copy_previous_data", "view_current_invoice", "close_editor"],
+    ["open_editor", "list_services", "add_service", "add_customer", "add_customer", "update_tax", "view_current_invoice", "close_editor"],
+    ["open_editor", "list_services", "view_last_invoice", "edit_customer", "copy_previous_data", "view_current_invoice", "close_editor"],
     ["open_editor", "list_services", "add_service", "add_customer", "edit_customer", "update_tax", "view_current_invoice", "close_editor"],
     ["open_editor", "list_services", "add_service", "copy_previous_data", "update_tax", "close_editor"],
     ["open_editor", "list_services", "view_last_invoice", "view_current_invoice", "close_editor"],
@@ -63,4 +63,4 @@ def generate_dataset(n=1000, save_path="agentic_chatbot_dataset_v3.jsonl"):
 
 # If running this script directly
 if __name__ == "__main__":
-    generate_dataset(n=1000)
+    generate_dataset(n=2000)
