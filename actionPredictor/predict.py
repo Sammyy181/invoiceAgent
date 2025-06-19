@@ -17,10 +17,17 @@ FUNCTION_MAP = {
     'update_tax' : 11
 }
 
-def predict_action(model, last_actions):
-    function_names = list(FUNCTION_MAP.keys())
+def predict_action(last_actions):
+    if len(last_actions) < 3:
+        print("Not enough actions to predict. Need at least 3 actions.")
+        return [""]
+        
     
-    with open("features.txt") as f:
+    model = xgb.Booster()
+    model.load_model("../actionPredictor/action_predictor_model.json")
+    last_actions = [last_actions]
+    
+    with open("../actionPredictor/features.txt") as f:
         feature_names = [line.strip() for line in f]
 
     # Initialize list of dicts
@@ -42,17 +49,18 @@ def predict_action(model, last_actions):
     predicted_actions = [list(FUNCTION_MAP.keys())[int(pred)] for pred in predictions]
     
     print(f"Predicted actions: {predicted_actions}")
+    return predicted_actions
 
 def main():
     
     model = xgb.Booster()
     model.load_model("action_predictor_model.json")
-    last_actions = [
+    """last_actions = [
         ['open_editor', 'list_services', 'add_service'],
         ['open_editor', 'view_last_invoice', 'edit_customer']
-    ]
+    ]"""
     
-    predict_action(model, last_actions)
+    #predict_action(model, last_actions)
 
 if __name__ == "__main__":
     main() 

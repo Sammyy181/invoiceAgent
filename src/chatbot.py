@@ -4,6 +4,8 @@ import datetime
 import logging
 import os
 from agent import *
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from actionPredictor.predict import predict_action
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))  # path to /src
 TEMPLATE_DIR = os.path.join(BASE_DIR, '../templates')
@@ -28,6 +30,7 @@ def home():
 def chat():
     """Handle chat messages from the frontend"""
     try:
+        global last_actions
         # Get JSON data from request
         data = request.get_json()
         
@@ -64,7 +67,11 @@ def chat():
         #response_message = f"I received your message: '{prompt}'. This is where your AI response would go!"
         
         if predicted_action:
-            update_last_actions(predicted_action)
+            last_actions = update_last_actions(predicted_action, last_actions)
+        
+        prediction = predict_action(last_actions)
+
+        response_message = f"{response_message}. Would you like to call {prediction[0]}?"
         
         return jsonify({
             "response": response_message,
@@ -146,12 +153,7 @@ def internal_error(error):
     return jsonify({
         "error": "Internal server error",
         "status": "error"
-    }), 500
-
-def update_last_actions(action):
-    last_actions.append(action)
-    if len(last_actions) > 3:
-        del last_actions[0]  # Keep only the last 3
+    }), 500 
 
 
 if __name__ == '__main__':

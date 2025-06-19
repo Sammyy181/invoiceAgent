@@ -5,8 +5,6 @@ from langchain_ollama import OllamaLLM as Ollama
 from langchain_core.output_parsers import BaseOutputParser
 from langchain_core.prompts import PromptTemplate
 from langchain.output_parsers import PydanticOutputParser
-from difflib import SequenceMatcher
-import re
 import inspect
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -242,6 +240,14 @@ class CommandInterpreter:
         
 if __name__ == "__main__":
     main()"""
+    
+def update_last_actions(action, last_actions=None):
+    last_actions.append(action)
+    
+    if len(last_actions) > 3:
+        del last_actions[0]
+        
+    return last_actions
     
 def get_input(user_input):
     interpreter = CommandInterpreter()
