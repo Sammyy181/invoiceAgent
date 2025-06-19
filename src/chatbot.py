@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 # Store prompts (in production, you'd use a database)
 prompts_history = []
+last_actions = []
 
 @app.route('/')
 def home():
@@ -57,8 +58,13 @@ def chat():
         
         # For now, just echo back a confirmation
         # This is where you'd integrate your AI model
-        response_message = get_input(prompt_data)
+        model_output = get_input(prompt_data)
+        predicted_action = model_output.get("action")
+        response_message = model_output.get("response")  # still a string
         #response_message = f"I received your message: '{prompt}'. This is where your AI response would go!"
+        
+        if predicted_action:
+            update_last_actions(predicted_action)
         
         return jsonify({
             "response": response_message,
@@ -141,6 +147,12 @@ def internal_error(error):
         "error": "Internal server error",
         "status": "error"
     }), 500
+
+def update_last_actions(action):
+    last_actions.append(action)
+    if len(last_actions) > 3:
+        del last_actions[0]  # Keep only the last 3
+
 
 if __name__ == '__main__':
     print("🚀 Starting AI Assistant Backend...")

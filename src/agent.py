@@ -251,8 +251,15 @@ def get_input(user_input):
     function_result = result.get("function_result", None)
     message = result.get("message", "No message provided")
     
+    interpretation = result.get("interpretation", {})
+    action = interpretation.get("command", "unknown")
+    
     print(f"Status: {status}")
+    print(f"Action: {action}")
     print(f"Message: {message}")
     print(f"Response: {function_result}")
     
-    return function_result
+    return {
+        "action": action,
+        "response": function_result
+    }
