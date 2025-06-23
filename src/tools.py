@@ -1,76 +1,13 @@
 import subprocess
 import os
 import sys
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 import time
 import platform
 import requests
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'invoiceEditor')))
+from update_excel import *
 
-def open_editor(port=7001, driver=None) -> str:
-    """
-    Launches the invoice editor application located in '../invoiceEditor/app.py'
-    """
-    try:
-        current_dir = os.path.dirname(__file__)
-        app_path = "../invoiceEditor/app.py"
-        app_full_path = os.path.abspath(os.path.join(current_dir, app_path))
-        app_dir = os.path.dirname(app_full_path)
-        
-        if not os.path.exists(app_full_path):
-            return f"❌ App file not found: {app_full_path}"
-        
-        # Create a log file to capture output
-        log_file = os.path.join(app_dir, "flask_debug.log")
-        
-        with open(log_file, "w") as f:
-            process = subprocess.Popen(
-                [sys.executable, "app.py"],  # Use relative path since we're in the correct directory
-                cwd=app_dir,
-                close_fds=True,
-                start_new_session=True,
-                stdout=f,  # Redirect to log file instead of DEVNULL
-                stderr=subprocess.STDOUT  # Combine stderr with stdout
-            )
-        
-        # Check if process is still running
-        poll_result = process.poll()
-        if poll_result is not None:
-            # Process has terminated, read the log
-            try:
-                with open(log_file, "r") as f:
-                    log_content = f.read()
-                return f"❌ Flask app terminated with exit code {poll_result}. Log:\n{log_content}"
-            except:
-                return f"❌ Flask app terminated with exit code {poll_result}. Could not read log file."
-            
-        base_url = f"http://127.0.0.1:{port}"
-        for _ in range(20):  # Try for up to ~10 seconds
-            try:
-                response = requests.get(base_url)
-                if response.status_code == 200:
-                    break
-            except requests.exceptions.ConnectionError:
-                time.sleep(0.5)
-        else:
-            return f"❌ Flask app didn't start at {base_url} within timeout."
-
-        try:
-            driver.get(f"{base_url}/select_service")
-        except Exception as e:
-            return f"❌ Failed to open browser: {str(e)}"
-        
-        return f"✅ Invoice Editor has been launched at http://127.0.0.1:7001/."
-        
-    except Exception as e:
-        print(e)
-        return f"❌ Failed to launch Invoice Editor: {str(e)}"
-
-
-def add_service(service_name: str, driver=None) -> str: 
+def add_service(service_name: str) -> str: 
     try:
         # Open the select_service page served by Flask  
         driver.get("http://127.0.0.1:7001/select_service")  # or localhost, adjust if needed
@@ -111,59 +48,6 @@ def add_service(service_name: str, driver=None) -> str:
 
     except Exception as e:
         return f"❌ Error while interacting with browser: {e}"
-
-def select_service_via_browser(service_name, driver=None) -> None:
-    driver.get("http://localhost:7001/select_service")
-
-    wait = WebDriverWait(driver, 10)
-    try:
-        # Wait until the first service button is visible
-        wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".service-buttons button")))
-
-        buttons = driver.find_elements(By.CSS_SELECTOR, ".service-buttons button")
-
-        found = False
-        for btn in buttons:
-            # Use innerText to reliably get dynamic/complex label text
-            label = btn.get_attribute("innerText").strip().lower()
-            if label == service_name.lower():
-                btn.click()
-                found = True
-                break
-
-        if not found:
-            print(f"❌ Service '{service_name}' not found.")
-
-    except Exception as e:
-        print(f"⚠️ Error while selecting service: {e}")
-        time.sleep(2)
-    
-    """time.sleep(2)
-    driver.quit()"""
-    
-def kill_process(port=7001) -> str:
-    try:
-        if platform.system() == "Windows":
-            # Windows
-            result = subprocess.run(['netstat', '-ano'], capture_output=True, text=True)
-            lines = result.stdout.split('\n')
-            for line in lines:
-                if f':{port}' in line and 'LISTENING' in line:
-                    pid = line.split()[-1]
-                    subprocess.run(['taskkill', '/F', '/PID', pid])
-                    return f"✅ Process on port {port} killed successfully."
-        else:
-            # Linux/Mac
-            result = subprocess.run(['lsof', '-ti', f':{port}'], capture_output=True, text=True)
-            if result.stdout.strip():
-                pid = result.stdout.strip()
-                subprocess.run(['kill', '-9', pid])
-                return f"✅ Process on port {port} killed successfully."
-    except Exception as e:
-        print(f"Error: {e}")
-        return f"❌ Failed to kill process on port {port}: {str(e)}"
-
-    return f"❌ No process found on port {port}."
     
 def view_invoice_for_service(service_name, driver=None) -> str:
     try:
@@ -220,64 +104,30 @@ def view_current_invoice_for_service(service_name, driver=None) -> str:
 
 def list_services(driver=None):
     try:
-        wait = WebDriverWait(driver, 10)
-        wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".service-buttons button")))
+        services = get_services()
 
-        buttons = driver.find_elements(By.CSS_SELECTOR, ".service-buttons button")
-        services = []
-        
-        for btn in buttons:
-            label = btn.get_attribute("innerText").strip()
-            if label:
-                services.append(label)
-        
         if not services:
             return "⚠️ No services found."
         
         return "The following services are available:<ul>" + "".join(f"<li>{service}</li>" for service in services) + "</ul>"
     except Exception as e:
         return f"❌ Error while listing services: {e}"
-    
 
-def update_preference_button(service_name, driver=None) -> str:
+
+def list_customers(service=None, driver=None):
     try:
-        driver.get("http://localhost:7001/select_service")  # Update if route differs
-        wait = WebDriverWait(driver, 10)
+        if not service:
+            return "❌ Please specify a service name to list customers."
 
-        select_service_via_browser(service_name, driver=driver)
-
-        print(f"✅ Selected service: {service_name}")
-        try:
-            view_button = wait.until(EC.presence_of_element_located((By.ID, "updatePreferenceButton")))
-            view_button.click()  # or whatever you need to do with it
-        except Exception as e:
-            return "❌ 'Update Preference' button not found."
-
-    except Exception as e:
-        return f"❌ Error occurred: {e}"
-    
-def list_customers(service_name, driver=None):
-    try:
-        update_preference_button(service_name, driver=driver)
-        wait = WebDriverWait(driver, 10)
-        wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".customer-btn")))
-
-        buttons = driver.find_elements(By.CSS_SELECTOR, ".customer-btn")
-        customers = []
-
-        for btn in buttons:
-            label = btn.get_attribute("innerText").strip()
-            if label:
-                customers.append(label)
+        customers = get_customers(service)
 
         if not customers:
-            return "⚠️ No customers found."
+            return f"⚠️ No customers found for service '{service}'."
 
-        return "The following customers are available:<ul>" + "".join(f"<li>{c}</li>" for c in customers) + "</ul>"
+        return f"Here are the customers for **{service}**:<ul>" + "".join(f"<li>{cust}</li>" for cust in customers) + "</ul>"
     
     except Exception as e:
-        return f"❌ Error while listing customers: {e}"
-
+        return f"❌ Error while listing customers for {service}: {e}"
 
 def copy_previous(service_name, driver=None):
     try:
@@ -306,24 +156,6 @@ def add_customer_button(service_name, driver=None):
         return f"{service_name} has been selected. Please enter the customer details in the form that appears."
     except Exception as e:
         return f"❌ Error occurred: {e}"
-    
-def select_customer(service_name, customer_name, driver=None):
-    try:
-        update_preference_button(service_name, driver=driver)
-        wait = WebDriverWait(driver, 10)
-        wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".customer-btn")))
-
-        buttons = driver.find_elements(By.CSS_SELECTOR, ".customer-btn")
-        for btn in buttons:
-            label = btn.get_attribute("innerText").strip()
-            if label.lower() == customer_name.lower():
-                btn.click()
-                return f"Customer '{customer_name}' selected for updating. Please proceed with the update."
-        
-        return f"❌ Customer '{customer_name}' not found on the page."
-
-    except Exception as e:
-        return f"❌ Error while selecting customer: {e}"
     
 def update_tax_rates(service_name: str, cgst: float = None, sgst: float = None, driver=None) -> str:
     try:
