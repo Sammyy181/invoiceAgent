@@ -5,7 +5,11 @@ import time
 import platform
 import requests
 import sys
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'invoiceEditor')))
+app_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'invoiceEditor'))
+
+if app_dir not in sys.path:
+    sys.path.insert(0, app_dir)
+
 from update_excel import *
 
 from datetime import datetime
