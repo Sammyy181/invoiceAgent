@@ -11,7 +11,6 @@ from selenium.webdriver.chrome.service import Service
 from pydantic import BaseModel
 
 function_map = {
-    'open_editor' : open_editor,
     'add_service' : add_service,
     'close_editor' : kill_process,
     'view_last_invoice' : view_invoice_for_service,
@@ -29,7 +28,6 @@ COMMAND_PROMPT_TEMPLATE = """You are a command interpreter for an invoice manage
 TASK: Extract commands from user input and respond ONLY in valid JSON format.
 
 VALID COMMANDS:
-• open_editor - Opens the invoice management interface
 • add_service - Adds a new service (requires: service_name)  
 • close_editor - Closes the invoice management interface
 • view_last_invoice - Shows the previous month's invoice for a service (requires: service_name)

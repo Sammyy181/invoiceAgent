@@ -1,53 +1,99 @@
 import subprocess
 import os
-import sys
+import pandas as pd
 import time
 import platform
 import requests
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'invoiceEditor')))
 from update_excel import *
 
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
+import json
+
 def add_service(service_name: str) -> str: 
     try:
-        # Open the select_service page served by Flask  
-        driver.get("http://127.0.0.1:7001/select_service")  # or localhost, adjust if needed
-
-        time.sleep(1)  # Wait for page to load
-
-        # Click on "Add New Service" button
-        add_button = driver.find_element(By.ID, "add-service-button")  # replace with correct ID
-        add_button.click()
-
-        time.sleep(0.5)  # wait for input field to appear
-
-        # Enter service name
-        input_box = driver.find_element(By.ID, "newServiceInput")  # replace with actual ID
-        input_box.send_keys(service_name)
-
-        time.sleep(0.5)
-
-        # Click on "Done" button
-        done_button = driver.find_element(By.ID, "submitNewServiceBtn")  # replace with correct ID
-        done_button.click()
+        excel_path = os.path.join("data", f"{service_name}.xlsx")
+        column_path = os.path.join("columns", f"columns/{service_name}.json")
+        titles_path = os.path.join("titles", f"titles/{service_name}.json")
+        categories_path = os.path.join("categories", f"categories/{service_name}.json")
         
-        time.sleep(1)  # wait for service to be added
+        now = datetime.now()
+        current_month = now.strftime("%B")
+        previous_month = (now - relativedelta(months=1)).strftime("%B")
+        try:
+            df = pd.read_excel("template.xlsx", sheet_name=current_month)
+        except Exception:
+            df = pd.read_excel("template.xlsx", sheet_name=previous_month)
+            
+        df.to_excel(excel_path, index=False)
+        with open(column_path, 'w') as f:
+            json.dump([], f, indent=4)
+        with open(categories_path, 'w') as f:
+            json.dump([], f, indent=4)
         
+        with open('titles_config.json', 'r') as f:
+            titles_config = json.load(f)
+        with open(titles_path, 'w') as f:
+            json.dump(titles_config, f, indent=4)
+        
+        return f"✅ Service '{service_name}' added successfully!"
+
+    except Exception as e:
+        return f"❌ Error while interacting with browser: {e}"
+
+def select_service_via_browser(service_name, driver=None) -> None:
+    driver.get("http://localhost:7001/select_service")
+
+    wait = WebDriverWait(driver, 10)
+    try:
+        # Wait until the first service button is visible
+        wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".service-buttons button")))
+
         buttons = driver.find_elements(By.CSS_SELECTOR, ".service-buttons button")
+
         found = False
-        
         for btn in buttons:
-            if btn.text.strip() == service_name:
-                btn.click()  
+            # Use innerText to reliably get dynamic/complex label text
+            label = btn.get_attribute("innerText").strip().lower()
+            if label == service_name.lower():
+                btn.click()
                 found = True
                 break
 
         if not found:
-            return f"❌ Service '{service_name}' not found after adding."
-
-        return f"✅ Service '{service_name}' added via UI."
+            print(f"❌ Service '{service_name}' not found.")
 
     except Exception as e:
-        return f"❌ Error while interacting with browser: {e}"
+        print(f"⚠️ Error while selecting service: {e}")
+        time.sleep(2)
+    
+    """time.sleep(2)
+    driver.quit()"""
+    
+def kill_process(port=7001) -> str:
+    try:
+        if platform.system() == "Windows":
+            # Windows
+            result = subprocess.run(['netstat', '-ano'], capture_output=True, text=True)
+            lines = result.stdout.split('\n')
+            for line in lines:
+                if f':{port}' in line and 'LISTENING' in line:
+                    pid = line.split()[-1]
+                    subprocess.run(['taskkill', '/F', '/PID', pid])
+                    return f"✅ Process on port {port} killed successfully."
+        else:
+            # Linux/Mac
+            result = subprocess.run(['lsof', '-ti', f':{port}'], capture_output=True, text=True)
+            if result.stdout.strip():
+                pid = result.stdout.strip()
+                subprocess.run(['kill', '-9', pid])
+                return f"✅ Process on port {port} killed successfully."
+    except Exception as e:
+        print(f"Error: {e}")
+        return f"❌ Failed to kill process on port {port}: {str(e)}"
+
+    return f"❌ No process found on port {port}."
     
 def view_invoice_for_service(service_name, driver=None) -> str:
     try:
