@@ -279,41 +279,78 @@
                 max-width: 85%;
             }
         }
+
+        #chat-widget {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 9999; /* Keep it on top */
+        }
+
+        .chat-container {
+            display: none;
+            width: 350px;
+            height: 500px;
+        }
+
+        .chat-container.visible {
+            display: flex;
+        }
+
+        .chat-toggle-button {
+            background: #6c5ce7;
+            color: white;
+            padding: 12px 16px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .chat-toggle-button:hover {
+            background: #5b4bd1;
+        }
+
     </style>
 </head>
 <body>
-    <div class="chat-container">
-        <div class="chat-header">
-            <h1>AI Assistant</h1>
-            <p>Your intelligent conversation partner</p>
-        </div>
-        
-        <div class="chat-messages" id="chat-messages">
-            <div class="welcome-message">
-                👋 Welcome! I'm your AI assistant. Ask me anything and I'll do my best to help you.
+    <div id="chat-widget">
+        <div class="chat-toggle-button" onclick="toggleChat()">💬</div>
+        <div class="chat-container" id="chat-container">
+            <div class="chat-header">
+                <h1>AI Assistant</h1>
+                <p>Your intelligent conversation partner</p>
             </div>
-        </div>
-        
-        <div class="loading" id="loading">
-            <div class="loading-dots">
-                <div></div>
-                <div></div>
-                <div></div>
+            
+            <div class="chat-messages" id="chat-messages">
+                <div class="welcome-message">
+                    👋 Welcome! I'm your AI assistant. Ask me anything and I'll do my best to help you.
+                </div>
             </div>
-            <p>AI is thinking...</p>
-        </div>
-        
-        <div class="input-container">
-            <div class="input-wrapper">
-                <input type="text" id="prompt-input" placeholder="Type your message here..." autocomplete="off">
+            
+            <div class="loading" id="loading">
+                <div class="loading-dots">
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                </div>
+                <p>AI is thinking...</p>
             </div>
-            <button class="send-button" id="send-button" onclick="sendMessage()">
-                <span>Send</span>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="22" y1="2" x2="11" y2="13"></line>
-                    <polygon points="22,2 15,22 11,13 2,9 22,2"></polygon>
-                </svg>
-            </button>
+            
+            <div class="input-container">
+                <div class="input-wrapper">
+                    <input type="text" id="prompt-input" placeholder="Type your message here..." autocomplete="off">
+                </div>
+                <button class="send-button" id="send-button" onclick="sendMessage()">
+                    <span>Send</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22,2 15,22 11,13 2,9 22,2"></polygon>
+                    </svg>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -376,6 +413,11 @@
             promptInput.disabled = false;
             sendButton.disabled = false;
             promptInput.focus();
+        }
+
+        function toggleChat() {
+            const chatContainer = document.getElementById('chat-container');
+            chatContainer.classList.toggle('visible');
         }
 
         function addMessage(text, sender) {
