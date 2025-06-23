@@ -122,31 +122,21 @@ def view_invoice_for_service(service_name, driver=None) -> str:
     except Exception as e:
         return f"❌ Error occurred: {e}"
     
-def view_current_invoice_for_service(service_name, driver=None) -> str:
+def view_current_invoice_for_service(service_name: str, driver=None, action='generate') -> str:
     try:
-        driver.get("http://localhost:7001/select_service")  # Update if route differs
-        wait = WebDriverWait(driver, 10)
+        df = your_invoice_function(action, service_name)
+        if df.empty:
+            return f"⚠️ No invoice data found for **{service_name}**."
 
-        select_service_via_browser(service_name, driver=driver)
+        # Get the top 3-5 rows to summarize
+        sample = df.head(5)
 
-        print(f"✅ Selected service: {service_name}")
-        try:
-            view_button = wait.until(EC.presence_of_element_located((By.ID, "viewCurrentInvoiceButton")))
-            view_button.click()  # or whatever you need to do with it
-        except Exception as e:
-            return "❌ 'View Current Month Invoice' button not found."
-            
-        # Step 3: Wait for invoice content to load
-        invoice_element = wait.until(EC.presence_of_element_located((By.ID, "invoiceContent")))
-        invoice_text = invoice_element.get_attribute("innerHTML")
+        preview = sample.to_markdown(index=False, tablefmt="grid")
 
-        if invoice_text:
-            return f"🧾 Invoice for {service_name} can now be seen."
-        else:
-            return f"⚠️ No invoice content found for service: {service_name}"
-
+        return f"🧾 **Current Month's Invoice for {service_name}**\n```\n{preview}\n```"
+    
     except Exception as e:
-        return f"❌ Error occurred: {e}"
+        return f"❌ Failed to load invoice for {service_name}: {e}"
     
 
 def list_services(driver=None):
@@ -206,35 +196,19 @@ def add_customer_button(service_name, driver=None):
     
 def update_tax_rates(service_name: str, cgst: float = None, sgst: float = None, driver=None) -> str:
     try:
-        update_preference_button(service_name, driver=driver)
-        wait = WebDriverWait(driver, 10)
-        
-        wait.until(EC.visibility_of_element_located((By.ID, "cgst")))
-        
-        # Find input fields
-        cgst_input = driver.find_element(By.ID, "cgst")
-        sgst_input = driver.find_element(By.ID, "sgst")
+        if not service_name:
+            return "❌ Service name is required."
 
-        # Update CGST only if provided
-        if cgst is not None:
-            cgst_input.clear()
-            cgst_input.send_keys(str(cgst))
-        else:
-            cgst = cgst_input.get_attribute("value")
+        current = get_service_tax(service_name)
 
-        # Update SGST only if provided
-        if sgst is not None:
-            sgst_input.clear()
-            sgst_input.send_keys(str(sgst))
-        else:
-            sgst = sgst_input.get_attribute("value")
+        if cgst is None:
+            cgst = current.get('cgst', 0.0)
+        if sgst is None:
+            sgst = current.get('sgst', 0.0)
 
-        # Submit the form
-        submit_button = driver.find_element(By.CSS_SELECTOR, ".form-btn.save")
-        submit_button.click()
+        update_service_tax(service_name, cgst, sgst)
 
-        return f"✅ Tax rates updated for '{service_name}': CGST={cgst}%, SGST={sgst}%"
-
+        return f"✅ Tax rates updated for **{service_name}**: CGST={cgst * 100:.2f}%, SGST={sgst * 100:.2f}%"
     except Exception as e:
         return f"❌ Failed to update tax rates: {e}"
 
