@@ -1,5 +1,8 @@
 import json
-from tools import *
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from .tools import *
 from typing import Dict, Any
 from langchain_ollama import OllamaLLM as Ollama
 from langchain_core.output_parsers import BaseOutputParser
