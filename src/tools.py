@@ -3,6 +3,11 @@ import os
 import pandas as pd
 import time
 import platform
+import requests
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'invoiceEditor')))
+from update_excel import *
+
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import json
@@ -146,64 +151,30 @@ def view_current_invoice_for_service(service_name, driver=None) -> str:
 
 def list_services(driver=None):
     try:
-        wait = WebDriverWait(driver, 10)
-        wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".service-buttons button")))
+        services = get_services()
 
-        buttons = driver.find_elements(By.CSS_SELECTOR, ".service-buttons button")
-        services = []
-        
-        for btn in buttons:
-            label = btn.get_attribute("innerText").strip()
-            if label:
-                services.append(label)
-        
         if not services:
             return "⚠️ No services found."
         
         return "The following services are available:<ul>" + "".join(f"<li>{service}</li>" for service in services) + "</ul>"
     except Exception as e:
         return f"❌ Error while listing services: {e}"
-    
 
-def update_preference_button(service_name, driver=None) -> str:
+
+def list_customers(service=None, driver=None):
     try:
-        driver.get("http://localhost:7001/select_service")  # Update if route differs
-        wait = WebDriverWait(driver, 10)
+        if not service:
+            return "❌ Please specify a service name to list customers."
 
-        select_service_via_browser(service_name, driver=driver)
-
-        print(f"✅ Selected service: {service_name}")
-        try:
-            view_button = wait.until(EC.presence_of_element_located((By.ID, "updatePreferenceButton")))
-            view_button.click()  # or whatever you need to do with it
-        except Exception as e:
-            return "❌ 'Update Preference' button not found."
-
-    except Exception as e:
-        return f"❌ Error occurred: {e}"
-    
-def list_customers(service_name, driver=None):
-    try:
-        update_preference_button(service_name, driver=driver)
-        wait = WebDriverWait(driver, 10)
-        wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".customer-btn")))
-
-        buttons = driver.find_elements(By.CSS_SELECTOR, ".customer-btn")
-        customers = []
-
-        for btn in buttons:
-            label = btn.get_attribute("innerText").strip()
-            if label:
-                customers.append(label)
+        customers = get_customers(service)
 
         if not customers:
-            return "⚠️ No customers found."
+            return f"⚠️ No customers found for service '{service}'."
 
-        return "The following customers are available:<ul>" + "".join(f"<li>{c}</li>" for c in customers) + "</ul>"
+        return f"Here are the customers for **{service}**:<ul>" + "".join(f"<li>{cust}</li>" for cust in customers) + "</ul>"
     
     except Exception as e:
-        return f"❌ Error while listing customers: {e}"
-
+        return f"❌ Error while listing customers for {service}: {e}"
 
 def copy_previous(service_name, driver=None):
     try:
@@ -232,24 +203,6 @@ def add_customer_button(service_name, driver=None):
         return f"{service_name} has been selected. Please enter the customer details in the form that appears."
     except Exception as e:
         return f"❌ Error occurred: {e}"
-    
-def select_customer(service_name, customer_name, driver=None):
-    try:
-        update_preference_button(service_name, driver=driver)
-        wait = WebDriverWait(driver, 10)
-        wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, ".customer-btn")))
-
-        buttons = driver.find_elements(By.CSS_SELECTOR, ".customer-btn")
-        for btn in buttons:
-            label = btn.get_attribute("innerText").strip()
-            if label.lower() == customer_name.lower():
-                btn.click()
-                return f"Customer '{customer_name}' selected for updating. Please proceed with the update."
-        
-        return f"❌ Customer '{customer_name}' not found on the page."
-
-    except Exception as e:
-        return f"❌ Error while selecting customer: {e}"
     
 def update_tax_rates(service_name: str, cgst: float = None, sgst: float = None, driver=None) -> str:
     try:
