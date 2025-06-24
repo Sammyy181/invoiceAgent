@@ -151,19 +151,33 @@ def add_customer_button(service_name):
     try:
         columns = load_service_columns(service_name)
         titles = load_service_titles(service_name)
-        
-        to_get = []
-        
+
+        fields = []
+
+        # Fixed field titles (like CGST, SGST, etc.)
         for title in titles:
-            to_get.append(title.get("title"))
-        for column in columns:
-            to_get.append(column.get("title"))
-        
-        return f"The following data must be entered - " + (name for name in to_get)
-        
-        
+            fields.append({
+                "id": title["id"],
+                "label": title["title"],
+                "type": "text"
+            })
+
+        # Dynamic columns (like Unit Price, Period, etc.)
+        for col in columns:
+            fields.append({
+                "id": col["title"].lower().replace(" ", "_"),
+                "label": col["title"],
+                "type": col.get("type", "text")  # you can extend this later
+            })
+
+        return {
+            "form_title": f"Add Customer to {service_name}",
+            "fields": fields
+        }
+
     except Exception as e:
-        return f"❌ Error occurred: {e}"
+        return { "error": str(e) }
+
     
 def update_tax_rates(service_name: str, cgst: float = None, sgst: float = None, driver=None) -> str:
     try:
