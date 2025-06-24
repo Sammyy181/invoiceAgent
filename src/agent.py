@@ -9,8 +9,6 @@ from langchain_core.output_parsers import BaseOutputParser
 from langchain_core.prompts import PromptTemplate
 from langchain.output_parsers import PydanticOutputParser
 import inspect
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
 from pydantic import BaseModel
 
 function_map = {
@@ -69,26 +67,6 @@ class CommandOutput(BaseModel):
     parameters: Dict[str, str]
 
 parser = PydanticOutputParser(pydantic_object=CommandOutput)          
-_global_driver = None
-
-def get_global_driver():
-    global _global_driver
-    if _global_driver is None:
-        service = Service() 
-        options = webdriver.ChromeOptions()
-        options.add_argument("--start-maximized")
-        _global_driver = webdriver.Chrome(options=options)
-    return _global_driver
-
-def close_global_driver():
-    """Close and reset the global WebDriver instance"""
-    global _global_driver
-    if _global_driver is not None:
-        try:
-            _global_driver.quit()
-        except:
-            pass  
-        _global_driver = None
 
 class CommandParser(BaseOutputParser):
     def parse(self, text:str) -> Dict[str, Any]:
@@ -172,9 +150,7 @@ class CommandInterpreter:
 
                 call_args = {}
                 for name in func_params:
-                    if name == "driver":
-                        call_args[name] = get_global_driver()
-                    elif name in provided_params:
+                    if name in provided_params:
                         call_args[name] = provided_params[name].capitalize()
 
                 # Check for missing required parameters
@@ -194,7 +170,6 @@ class CommandInterpreter:
                 result = func(**call_args)
 
                 if command == "close_editor":
-                    close_global_driver()
                     return {
                         "status": "success",
                         "message": f"Successfully executed {command} and closed browser",
