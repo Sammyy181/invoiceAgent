@@ -120,17 +120,16 @@ def view_current_invoice_for_service(service_name: str, driver=None, action='gen
     try:
         df = your_invoice_function(action, service_name)
         if df.empty:
-            return f"⚠️ No invoice data found for **{service_name}**."
+            return f"<p>⚠️ No invoice data found for <b>{service_name}</b>.</p>"
 
-        # Get the top 3-5 rows to summarize
-        sample = df.head(5)
+        sample = df.head(10)
+        table_html = sample.to_html(index=False, classes="chatbot-invoice-table", border=1)
 
-        preview = sample.to_markdown(index=False, tablefmt="grid")
-
-        return f"🧾 **Current Month's Invoice for {service_name}**\n```\n{preview}\n```"
+        return f"<b>🧾 Current Month's Invoice for {service_name}</b><br><br>{table_html}"
     
     except Exception as e:
-        return f"❌ Failed to load invoice for {service_name}: {e}"
+        return f"<p>❌ Failed to load invoice for <b>{service_name}</b>: {e}</p>"
+
     
 
 def list_services(driver=None):
