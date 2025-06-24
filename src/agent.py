@@ -13,7 +13,6 @@ from pydantic import BaseModel
 
 function_map = {
     'add_service' : add_service,
-    'close_editor' : kill_process,
     'view_last_invoice' : view_invoice_for_service,
     'list_services' : list_services,
     'view_current_invoice': view_current_invoice_for_service,
@@ -29,7 +28,6 @@ TASK: Extract commands from user input and respond ONLY in valid JSON format.
 
 VALID COMMANDS:
 • add_service - Adds a new service (requires: service_name)  
-• close_editor - Closes the invoice management interface
 • view_last_invoice - Shows the previous month's invoice for a service (requires: service_name)
 • list_services - Lists all available services
 • view_current_invoice - Shows the current month's invoice for a service (requires: service_name)

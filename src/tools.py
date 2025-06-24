@@ -1,8 +1,5 @@
-import subprocess
 import os
 import pandas as pd
-import time
-import platform
 from flask import url_for
 import sys
 app_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'invoiceEditor'))
@@ -47,30 +44,6 @@ def add_service(service_name: str) -> str:
 
     except Exception as e:
         return f"❌ Error while interacting with browser: {e}"
-
-def kill_process(port=7001) -> str:
-    try:
-        if platform.system() == "Windows":
-            # Windows
-            result = subprocess.run(['netstat', '-ano'], capture_output=True, text=True)
-            lines = result.stdout.split('\n')
-            for line in lines:
-                if f':{port}' in line and 'LISTENING' in line:
-                    pid = line.split()[-1]
-                    subprocess.run(['taskkill', '/F', '/PID', pid])
-                    return f"✅ Process on port {port} killed successfully."
-        else:
-            # Linux/Mac
-            result = subprocess.run(['lsof', '-ti', f':{port}'], capture_output=True, text=True)
-            if result.stdout.strip():
-                pid = result.stdout.strip()
-                subprocess.run(['kill', '-9', pid])
-                return f"✅ Process on port {port} killed successfully."
-    except Exception as e:
-        print(f"Error: {e}")
-        return f"❌ Failed to kill process on port {port}: {str(e)}"
-
-    return f"❌ No process found on port {port}."
     
 def view_invoice_for_service(service_name: str, driver=None) -> str:
     try:
@@ -87,8 +60,6 @@ def view_invoice_for_service(service_name: str, driver=None) -> str:
     
     except Exception as e:
         return f"<p>❌ Failed to load invoice for <b>{service_name}</b>: {e}</p>"
-
-
     
 def view_current_invoice_for_service(service_name: str, driver=None, action='generate') -> str:
     try:
@@ -102,11 +73,9 @@ def view_current_invoice_for_service(service_name: str, driver=None, action='gen
         return f"<b>🧾 Current Month's Invoice for {service_name}</b><br><br>{table_html}"
     
     except Exception as e:
-        return f"<p>❌ Failed to load invoice for <b>{service_name}</b>: {e}</p>"
+        return f"<p>❌ Failed to load invoice for <b>{service_name}</b>: {e}</p>"    
 
-    
-
-def list_services(driver=None):
+def list_services():
     try:
         services = get_services()
 
@@ -118,7 +87,7 @@ def list_services(driver=None):
         return f"❌ Error while listing services: {e}"
 
 
-def list_customers(service_name=None, driver=None):
+def list_customers(service_name=None):
     try:
         if not service_name:
             return "❌ Please specify a service name to list customers."
@@ -133,16 +102,9 @@ def list_customers(service_name=None, driver=None):
     except Exception as e:
         return f"❌ Error while listing customers for {service_name}: {e}"
 
-def copy_previous(service_name, driver=None):
+def copy_previous(service_name):
     try:
-        update_preference_button(service_name, driver=driver)
-        wait = WebDriverWait(driver, 10)
-        wait.until(EC.presence_of_element_located((By.ID, "copyPreviousData")))
-        
-        button = driver.find_element(By.ID, "copyPreviousData")
-        button.click()
-        
-        time.sleep(1)
+        copy_previous_data(service=service_name)
         return f"Copied previous data for service: {service_name}!"
     except Exception as e:
         return f"Error while copying previous data: {e}"
@@ -151,7 +113,6 @@ def add_customer_button(service_name):
     try:
         columns = load_service_columns(service_name)
         titles = load_service_titles(service_name)
-        req_titles = ['fixed_1', 'fixed_2', 'fixed_3', 'fixed_4', 'fixed_7']
 
         html = f'<form id="addCustomerForm" method="POST" action="{url_for("add_customer")}" style="font-size: 0.85rem;">\n'
         html += f'  <div>\n'
