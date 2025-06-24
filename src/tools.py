@@ -3,7 +3,7 @@ import os
 import pandas as pd
 import time
 import platform
-import requests
+from flask import url_for
 import sys
 app_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'invoiceEditor'))
 
@@ -151,29 +151,59 @@ def add_customer_button(service_name):
     try:
         columns = load_service_columns(service_name)
         titles = load_service_titles(service_name)
+        req_titles = ['fixed_1', 'fixed_2', 'fixed_3', 'fixed_4', 'fixed_7']
 
-        fields = []
+        html = f'<form id="addCustomerForm" method="POST" action="{url_for("add_customer")}" style="font-size: 0.85rem;">\n'
+        html += f'  <div>\n'
+        html += f'        <input type="hidden" name="service" value="{service_name}" />\n'
+        html += f'    <p style="margin-bottom: 8px; font-weight: bold;">Add Customer:</p>\n'
 
-        # Fixed field titles (like CGST, SGST, etc.)
-        for title in titles:
-            fields.append({
-                "id": title["id"],
-                "label": title["title"],
-                "type": "text"
-            })
+        def render_input(label, field_id, input_type="text"):
+            return f'''    <div style="margin-bottom: 10px;">
+      <label for="{field_id}" style="display: block; font-size: 0.85rem; font-weight: 500; margin-bottom: 4px;">{label}</label>
+      <input type="{input_type}" id="{field_id}" name="{field_id}" style="width: 100%; padding: 6px; font-size: 0.85rem;" />
+    </div>\n'''
 
-        # Dynamic columns (like Unit Price, Period, etc.)
+        def get_title_by_id(titles, target_id):
+            for t in titles:
+                if t["id"] == target_id:
+                    return t["title"]
+            return None
+
+        html +=  f'''    <div style="margin-bottom: 10px;">
+                            <label for="customerName" style="display: block; font-size: 0.85rem; font-weight: 500; margin-bottom: 4px;">{get_title_by_id(titles, 'fixed_1')}</label>
+                            <input type="text" id="customerName" name="customer_name" style="width: 100%; padding: 6px; font-size: 0.85rem;" />
+                        </div>\n'''
+                        
+        html +=  f'''    <div style="margin-bottom: 10px;">
+                            <label for="category" style="display: block; font-size: 0.85rem; font-weight: 500; margin-bottom: 4px;">{get_title_by_id(titles, 'fixed_7')}</label>
+                            <input type="text" id="category" name="selected_id" style="width: 100%; padding: 6px; font-size: 0.85rem;" />
+                        </div>\n'''
+        
+        html +=  f'''    <div style="margin-bottom: 10px;">
+                            <label for="unitPrice" style="display: block; font-size: 0.85rem; font-weight: 500; margin-bottom: 4px;">{get_title_by_id(titles, 'fixed_2')}</label>
+                            <input type="number" id="unitPrice" name="unit_price" step="10" style="width: 100%; padding: 6px; font-size: 0.85rem;" />
+                        </div>\n'''
+        
+        html +=  f'''    <div style="margin-bottom: 10px;">
+                            <label for="consumptionPeriod" style="display: block; font-size: 0.85rem; font-weight: 500; margin-bottom: 4px;">{get_title_by_id(titles, 'fixed_3')}</label>
+                            <input type="text" id="consumptionPeriod" name="consumption_period" style="width: 100%; padding: 6px; font-size: 0.85rem;" />
+                        </div>\n'''
+        
+        html +=  f'''    <div style="margin-bottom: 10px;">
+                            <label for="usagePercent" style="display: block; font-size: 0.85rem; font-weight: 500; margin-bottom: 4px;">{get_title_by_id(titles, 'fixed_4')}</label>
+                            <input type="text" id="usagePercent" name="usage_percent" min="0" max="100" step="1" style="width: 100%; padding: 6px; font-size: 0.85rem;" />
+                        </div>\n''' 
+
         for col in columns:
-            fields.append({
-                "id": col["title"].lower().replace(" ", "_"),
-                "label": col["title"],
-                "type": col.get("type", "text")  # you can extend this later
-            })
+            field_id = col["title"].lower().replace(" ", "_")
+            input_type = col.get("type", "text")
+            html += render_input(col["title"], field_id, input_type)
 
-        return {
-            "form_title": f"Add Customer to {service_name}",
-            "fields": fields
-        }
+        html += '    <button type="submit" style="font-size: 0.85rem; padding: 6px 12px;">Add Customer</button>\n'
+        html += '  </div>\n</form>'
+
+        return html
 
     except Exception as e:
         return { "error": str(e) }
