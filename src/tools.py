@@ -100,31 +100,21 @@ def kill_process(port=7001) -> str:
 
     return f"❌ No process found on port {port}."
     
-def view_invoice_for_service(service_name, driver=None) -> str:
+def view_invoice_for_service(service_name: str, driver=None) -> str:
     try:
-        driver.get("http://localhost:7001/select_service")  # Update if route differs
-        wait = WebDriverWait(driver, 10)
+        df = your_invoice_function(action='view', service=service_name)
+        
+        if df.empty:
+            return f"⚠️ No invoice data found for **{service_name}** (last month)."
+        
+        # Get top 5 entries to show as sample
+        preview = df.head(5).to_markdown(index=False, tablefmt="grid")
 
-        select_service_via_browser(service_name, driver=driver)
-
-        print(f"✅ Selected service: {service_name}")
-        try:
-            view_button = wait.until(EC.presence_of_element_located((By.ID, "viewInvoiceButton")))
-            view_button.click()  
-        except Exception as e:
-            return "❌ 'View Last Month Invoice' button not found."
-            
-        # Step 3: Wait for invoice content to load
-        invoice_element = wait.until(EC.presence_of_element_located((By.ID, "invoiceContent")))
-        invoice_text = invoice_element.get_attribute("innerHTML")
-
-        if invoice_text:
-            return f"🧾 Invoice for {service_name} can now be seen."
-        else:
-            return f"⚠️ No invoice content found for service: {service_name}"
-
+        return f"📄 **Last Month's Invoice for {service_name}**\n```\n{preview}\n```"
+    
     except Exception as e:
-        return f"❌ Error occurred: {e}"
+        return f"❌ Failed to load invoice for {service_name}: {e}"
+
     
 def view_current_invoice_for_service(service_name: str, driver=None, action='generate') -> str:
     try:
