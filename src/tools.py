@@ -168,12 +168,74 @@ def add_customer_button(service_name):
 
     except Exception as e:
         return { "error": str(e) }
+    
+def edit_customer(service_name, customer_name):
+    try:
+        columns = load_service_columns(service_name)
+        titles = load_service_titles(service_name)
+        
+        html = f'<form id="editCustomerForm" method="POST" action="{url_for("update_customer")}" style="font-size: 0.85rem;">\n'
+        html += f'  <div>\n'
+        html += f'        <input type="hidden" name="service" value="{service_name}" />\n'
+        html += f'        <input type="hidden" name="customer" value="{customer_name}" />\n'
+        html += f'    <p style="margin-bottom: 8px; font-weight: bold;">Edit Customer:</p>\n'
 
+        def render_input(label, field_id, input_type="text"):
+            return f'''    <div style="margin-bottom: 10px;">
+                <label for="{field_id}" style="display: block; font-size: 0.85rem; font-weight: 500; margin-bottom: 4px;">{label}</label>
+                <input type="{input_type}" id="{field_id}" name="{field_id}" style="width: 100%; padding: 6px; font-size: 0.85rem;" />
+            </div>\n'''
+        
+        def get_title_by_id(titles, target_id):
+            for t in titles:
+                if t["id"] == target_id:
+                    return t["title"]
+            return None
+        
+        html +=  f'''    <div style="margin-bottom: 10px;">
+                                <label for="category" style="display: block; font-size: 0.85rem; font-weight: 500; margin-bottom: 4px;">{get_title_by_id(titles, 'fixed_7')}</label>
+                                <input type="text" id="category" name="category" style="width: 100%; padding: 6px; font-size: 0.85rem;" />
+                            </div>\n'''
+            
+        html +=  f'''    <div style="margin-bottom: 10px;">
+                            <label for="unitPrice" style="display: block; font-size: 0.85rem; font-weight: 500; margin-bottom: 4px;">{get_title_by_id(titles, 'fixed_2')}</label>
+                            <input type="number" id="unitPrice" name="cost" step="10" style="width: 100%; padding: 6px; font-size: 0.85rem;" />
+                        </div>\n'''
+        
+        html +=  f'''    <div style="margin-bottom: 10px;">
+                            <label for="consumptionPeriod" style="display: block; font-size: 0.85rem; font-weight: 500; margin-bottom: 4px;">{get_title_by_id(titles, 'fixed_3')}</label>
+                            <input type="text" id="consumptionPeriod" name="period" style="width: 100%; padding: 6px; font-size: 0.85rem;" />
+                        </div>\n'''
+        
+        html +=  f'''    <div style="margin-bottom: 10px;">
+                            <label for="usagePercent" style="display: block; font-size: 0.85rem; font-weight: 500; margin-bottom: 4px;">{get_title_by_id(titles, 'fixed_4')}</label>
+                            <input type="text" id="usagePercent" name="usage" min="0" max="100" step="1" style="width: 100%; padding: 6px; font-size: 0.85rem;" />
+                        </div>\n''' 
+        
+        for col in columns:
+                field_id = col["title"].lower().replace(" ", "_")
+                input_type = col.get("type", "text")
+                html += render_input(col["title"], field_id, input_type)
+
+        html += '    <button type="submit" style="font-size: 0.85rem; padding: 6px 12px;">Edit Customer</button>\n'
+        html += '  </div>\n</form>'
+        return html
+    
+    except Exception as e:
+        return { "error": str(e) }
     
 def update_tax_rates(service_name: str, cgst: float = None, sgst: float = None, driver=None) -> str:
     try:
         if not service_name:
             return "❌ Service name is required."
+        service_name = service_name.capitalize()
+        
+        if type(cgst) != float:
+            cgst = cgst.strip().replace('%','')
+            cgst = (float(cgst))/100
+        if type(sgst) != float:
+            sgst = sgst.strip().replace('%','')
+            sgst = (float(sgst))/100
 
         current = get_service_tax(service_name)
 
@@ -184,7 +246,7 @@ def update_tax_rates(service_name: str, cgst: float = None, sgst: float = None, 
 
         update_service_tax(service_name, cgst, sgst)
 
-        return f"✅ Tax rates updated for **{service_name}**: CGST={cgst * 100:.2f}%, SGST={sgst * 100:.2f}%"
+        return f"✅ Tax rates updated for <strong>{service_name}</strong>: CGST={cgst * 100:.2f}%, SGST={sgst * 100:.2f}%"
     except Exception as e:
         return f"❌ Failed to update tax rates: {e}"
 

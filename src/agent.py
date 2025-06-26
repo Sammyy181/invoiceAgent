@@ -19,6 +19,7 @@ function_map = {
     'copy_previous_data': copy_previous,
     'list_customers': list_customers,
     'add_customer': add_customer_button,
+    'edit_customer': edit_customer,
     'update_tax' : update_tax_rates
 }
 
@@ -34,6 +35,7 @@ VALID COMMANDS:
 • copy_previous_data - Copies previous data for a service (requires: service_name)
 • list_customers - Lists all customers for a service (requires: service_name)
 • add_customer - Adds a new customer (requires: service_name)
+• edit_customer - Edits a customer data (requires: service_name, customer_name)
 • update_tax - Updates tax rates for a service (requires: service_name, cgst, sgst)
 
 RESPONSE FORMAT:
