@@ -52,7 +52,6 @@ def view_invoice_for_service(service_name: str, driver=None) -> str:
         if df.empty:
             return f"<p>⚠️ No invoice data found for <b>{service_name}</b> (last month).</p>"
         
-        # Get top 5 entries as a preview
         sample = df.head(5)
         table_html = sample.to_html(index=False, classes="chatbot-invoice-table", border=1)
 
