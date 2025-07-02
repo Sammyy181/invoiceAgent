@@ -1,5 +1,5 @@
 # invoiceAgent
 
-Hey! :)
+On installing the file for the first time, run <setup.bat> to complete the installation
 
-(Development in progress)
+To open the application subsequently, run <run.bat>
